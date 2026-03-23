@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recursion</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="desktop">
+        <div id="topbar">
+            <span id="brand">Recursion</span>
+            <div id="urlbar-wrap">
+                <input id="urlbar" type="text" placeholder="Enter a URL..." spellcheck="false" autocomplete="off">
+                <button id="go-btn">Go</button>
+            </div>
+            <span id="clock"></span>
+        </div>
+
+        <div id="windowarea">
+            <div id="welcome">
+                <div id="welcome-inner">
+                    <h1>Recursion</h1>
+                    <p>A browser-native runtime.</p>
+                    <p class="hint">Type a URL above to get started.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="taskbar">
+            <div id="taskbar-windows"></div>
+            <div id="taskbar-right">
+                <span id="proxy-status">Connecting...</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="/uv/uv.bundle.js"></script>
+    <script src="/uv/uv.config.js"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/uv/uv.sw.js", { scope: "/uv/service/" })
+                .then(() => {
+                    document.getElementById("proxy-status").textContent = "UV Ready";
+                    document.getElementById("proxy-status").style.color = "#44aa66";
+                })
+                .catch(e => {
+                    document.getElementById("proxy-status").textContent = "UV Failed";
+                    document.getElementById("proxy-status").style.color = "#cc3333";
+                    console.error("UV SW error:", e);
+                });
+        }
+    </script>
+    <script src="desktop.js"></script>
+</body>
+</html>
