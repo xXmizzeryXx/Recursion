@@ -16,7 +16,6 @@
             </div>
             <span id="clock"></span>
         </div>
-
         <div id="windowarea">
             <div id="welcome">
                 <div id="welcome-inner">
@@ -26,31 +25,13 @@
                 </div>
             </div>
         </div>
-
         <div id="taskbar">
             <div id="taskbar-windows"></div>
             <div id="taskbar-right">
-                <span id="proxy-status">Connecting...</span>
+                <span id="proxy-status">Flux Ready</span>
             </div>
         </div>
     </div>
-
-    <script src="/uv/uv.bundle.js"></script>
-    <script src="/uv/uv.config.js"></script>
-    <script>
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("/uv/uv.sw.js", { scope: "/uv/service/" })
-                .then(() => {
-                    document.getElementById("proxy-status").textContent = "UV Ready";
-                    document.getElementById("proxy-status").style.color = "#44aa66";
-                })
-                .catch(e => {
-                    document.getElementById("proxy-status").textContent = "UV Failed";
-                    document.getElementById("proxy-status").style.color = "#cc3333";
-                    console.error("UV SW error:", e);
-                });
-        }
-    </script>
     <script src="desktop.js"></script>
 </body>
 </html>
