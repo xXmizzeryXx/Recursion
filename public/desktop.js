@@ -1,5 +1,8 @@
 const Desktop = (() => {
 
+    const FLUX_WORKER  = 'https://flux-worker.eclipseservice.workers.dev';
+    const FLUX_PREFIX  = '/fetch/';
+
     const windowArea = document.getElementById("windowarea");
     const taskbarWin = document.getElementById("taskbar-windows");
     const urlbar     = document.getElementById("urlbar");
@@ -18,27 +21,35 @@ const Desktop = (() => {
     setInterval(updateClock, 1000);
     updateClock();
 
-    function proxyURL(url) {
-        if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            url = "https://" + url;
+    function encodeUrl(url) {
+        return btoa(unescape(encodeURIComponent(url)))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function fluxURL(url) {
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
         }
-        try {
-            if (typeof __uv$config !== "undefined") {
-                return __uv$config.prefix + __uv$config.encodeUrl(url);
-            }
-        } catch {}
-        return url;
+        return FLUX_WORKER + FLUX_PREFIX + encodeUrl(url);
+    }
+
+    function normalizeInput(input) {
+        input = input.trim();
+        if (!input) return null;
+        if (input.startsWith('http://') || input.startsWith('https://')) return input;
+        if (/^[\w-]+\.[\w.]{2,}/.test(input) && !input.includes(' ')) return 'https://' + input;
+        return 'https://www.google.com/search?q=' + encodeURIComponent(input);
     }
 
     function createWindow(title, url, x, y, w, h) {
         welcome.style.display = "none";
 
-        const id  = nextId++;
-        const win = document.createElement("div");
+        const id      = nextId++;
+        const proxied = fluxURL(url);
+        const win     = document.createElement("div");
+
         win.className = "win focused";
         win.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;z-index:${10 + id}`;
-
-        const proxied = proxyURL(url);
 
         win.innerHTML = `
             <div class="win-titlebar">
@@ -48,7 +59,7 @@ const Desktop = (() => {
                 <span class="win-title">${title}</span>
             </div>
             <div class="win-content">
-                <iframe src="${proxied}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+                <iframe src="${proxied}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-top-navigation allow-downloads"></iframe>
             </div>
             <div class="win-resize"></div>
         `;
@@ -60,6 +71,7 @@ const Desktop = (() => {
         const minBtn   = win.querySelector(".win-btn.minimize");
         const maxBtn   = win.querySelector(".win-btn.maximize");
         const resize   = win.querySelector(".win-resize");
+        const iframe   = win.querySelector("iframe");
 
         let dragging  = false;
         let resizing  = false;
@@ -88,11 +100,10 @@ const Desktop = (() => {
                 win.style.top  = Math.max(0, Math.min(e.clientY - offY, area.height - win.offsetHeight)) + "px";
             }
             if (resizing) {
-                const area = windowArea.getBoundingClientRect();
                 const newW = Math.max(300, e.clientX - win.getBoundingClientRect().left);
                 const newH = Math.max(200, e.clientY - win.getBoundingClientRect().top);
-                win.style.width  = Math.min(newW, area.width)  + "px";
-                win.style.height = Math.min(newH, area.height) + "px";
+                win.style.width  = newW + "px";
+                win.style.height = newH + "px";
             }
         });
 
@@ -106,7 +117,7 @@ const Desktop = (() => {
         minBtn.addEventListener("click", () => {
             const content = win.querySelector(".win-content");
             const isMin   = content.style.display === "none";
-            content.style.display = isMin ? "" : "none";
+            content.style.display                        = isMin ? "" : "none";
             win.querySelector(".win-resize").style.display = isMin ? "" : "none";
         });
 
@@ -172,14 +183,14 @@ const Desktop = (() => {
     }
 
     goBtn.addEventListener("click", () => {
-        const url = urlbar.value.trim();
-        if (url) navigate(url);
+        const input = normalizeInput(urlbar.value);
+        if (input) navigate(input);
     });
 
     urlbar.addEventListener("keydown", e => {
         if (e.key === "Enter") {
-            const url = urlbar.value.trim();
-            if (url) navigate(url);
+            const input = normalizeInput(urlbar.value);
+            if (input) navigate(input);
         }
     });
 
